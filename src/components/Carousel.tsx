@@ -1,26 +1,78 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import './Carousel.scss';
 
-const Carousel: React.FC = () => (
-  <div className="Carousel">
-    <ul className="Carousel__list">
-      <li>
-        <img src="./img/1.png" alt="1" />
-      </li>
-      <li>
-        <img src="./img/1.png" alt="2" />
-      </li>
-      <li>
-        <img src="./img/1.png" alt="3" />
-      </li>
-      <li>
-        <img src="./img/1.png" alt="4" />
-      </li>
-    </ul>
+type Props = {
+  images: string[];
+  step?: number;
+  frameSize?: number;
+  itemWidth?: number;
+  animationDuration?: number;
+  infinite?: boolean;
+};
 
-    <button type="button">Prev</button>
-    <button type="button">Next</button>
-  </div>
-);
+const Carousel: React.FC<Props> = ({
+  images,
+  step = 3,
+  frameSize = 3,
+  itemWidth = 130,
+  animationDuration = 1000,
+}) => {
+  const listRef = useRef<HTMLUListElement | null>(null);
+  const shiftRef = useRef(0);
+
+  const move = (moveDirection: 'next' | 'previous') => {
+    const delta = step * itemWidth;
+    let newShift =
+      shiftRef.current + (moveDirection === 'next' ? -delta : delta);
+
+    const maxShift = 0;
+    const minShift = -((images.length - frameSize) * itemWidth);
+
+    newShift = Math.max(minShift, Math.min(maxShift, newShift));
+
+    shiftRef.current = newShift;
+    if (listRef.current) {
+      listRef.current.style.transform = `translate(${shiftRef.current}px, 0)`;
+    }
+  };
+
+  return (
+    <div className="Carousel" style={{ width: `${frameSize * itemWidth}px` }}>
+      <ul
+        className="Carousel__list"
+        ref={listRef}
+        style={{ transition: `transform ${animationDuration}ms ease ` }}
+      >
+        {images.map((imageSrc, index) => (
+          <li className="Carousel__listItem" key={index}>
+            <img
+              className="Carousel__image"
+              src={imageSrc}
+              alt="carousel"
+              width={itemWidth}
+            />
+          </li>
+        ))}
+      </ul>
+
+      <button
+        className="Carousel__button--previous"
+        type="button"
+        onClick={() => move('previous')}
+      >
+        Prev
+      </button>
+
+      <button
+        className="Carousel__button--next"
+        type="button"
+        onClick={() => move('next')}
+        data-cy="next"
+      >
+        Next
+      </button>
+    </div>
+  );
+};
 
 export default Carousel;
