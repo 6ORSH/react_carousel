@@ -28,17 +28,24 @@ class App extends React.Component<{}, State> {
     frameSize: 3,
     itemWidth: 130,
     animationDuration: 1000,
+    infinite: false,
   };
 
   handleStateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const key = event.target.name as keyof State;
-    const val = Number(event.target.value) || 0;
+    let value;
 
-    this.setState(prev => ({ ...(prev as State), [key]: val }));
+    if (event.target.type === 'checkbox') {
+      value = event.target.checked;
+    } else {
+      value = Number(event.target.value) || 0;
+    }
+
+    this.setState(prev => ({ ...(prev as State), [key]: value }));
   };
 
   render() {
-    const { images, step, frameSize, itemWidth, animationDuration } =
+    const { images, step, frameSize, itemWidth, animationDuration, infinite } =
       this.state;
 
     return (
@@ -70,11 +77,20 @@ class App extends React.Component<{}, State> {
             value={itemWidth}
             onChange={this.handleStateChange}
           />
-          <label htmlFor="animationDuration">Animation duration</label>
+          <label htmlFor="animationDurationId">Animation duration</label>
           <input
-            type="number"
+            id="animationDurationId"
             name="animationDuration"
+            type="number"
             value={animationDuration}
+            onChange={this.handleStateChange}
+          />
+          <label htmlFor="infiniteId">Infinite loop</label>
+          <input
+            id="infiniteId"
+            name="infinite"
+            type="checkbox"
+            checked={infinite}
             onChange={this.handleStateChange}
           />
         </div>
@@ -85,7 +101,7 @@ class App extends React.Component<{}, State> {
           frameSize={frameSize}
           itemWidth={itemWidth}
           animationDuration={animationDuration}
-          infinite={false}
+          infinite={infinite}
         />
       </div>
     );

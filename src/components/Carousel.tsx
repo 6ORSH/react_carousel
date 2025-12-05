@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './Carousel.scss';
 
 type Props = {
@@ -16,23 +16,69 @@ const Carousel: React.FC<Props> = ({
   frameSize = 3,
   itemWidth = 130,
   animationDuration = 1000,
+  infinite = false,
 }) => {
   const listRef = useRef<HTMLUListElement | null>(null);
   const shiftRef = useRef(0);
 
-  const move = (moveDirection: 'next' | 'previous') => {
+  const extendedImages = infinite ? [...images, ...images, ...images] : images;
+  const middleIndex = images.length;
+  const initialShift = infinite ? -(middleIndex * itemWidth) : 0;
+
+  useEffect(() => {
+    shiftRef.current = initialShift;
+    if (listRef.current) {
+      listRef.current.style.transform = `translate(${initialShift}px, 0)`;
+    }
+  }, [images, infinite]);
+
+  const move = (direction: 'next' | 'previous') => {
     const delta = step * itemWidth;
-    let newShift =
-      shiftRef.current + (moveDirection === 'next' ? -delta : delta);
+    const change = direction === 'next' ? -delta : delta;
 
-    const maxShift = 0;
-    const minShift = -((images.length - frameSize) * itemWidth);
+    let newShift = shiftRef.current + change;
 
-    newShift = Math.max(minShift, Math.min(maxShift, newShift));
+    if (!infinite) {
+      const maxShift = 0;
+      const minShift = -((images.length - frameSize) * itemWidth);
+
+      newShift = Math.max(minShift, Math.min(maxShift, newShift));
+    }
 
     shiftRef.current = newShift;
+
     if (listRef.current) {
-      listRef.current.style.transform = `translate(${shiftRef.current}px, 0)`;
+      listRef.current.style.transition = `transform ${animationDuration}ms`;
+      listRef.current.style.transform = `translate(${newShift}px, 0)`;
+    }
+
+    if (infinite) {
+      const limitLeft = -(extendedImages.length - middleIndex) * itemWidth;
+      const limitRight = -(middleIndex * itemWidth);
+
+      if (newShift > limitRight + delta) {
+        setTimeout(() => {
+          if (!listRef.current) {
+            return;
+          }
+
+          listRef.current.style.transition = 'none';
+          shiftRef.current = -(middleIndex * itemWidth);
+          listRef.current.style.transform = `translate(${shiftRef.current}px, 0)`;
+        }, animationDuration);
+      }
+
+      if (newShift < limitLeft - delta) {
+        setTimeout(() => {
+          if (!listRef.current) {
+            return;
+          }
+
+          listRef.current.style.transition = 'none';
+          shiftRef.current = -(middleIndex * itemWidth);
+          listRef.current.style.transform = `translate(${shiftRef.current}px, 0)`;
+        }, animationDuration);
+      }
     }
   };
 
@@ -41,9 +87,11 @@ const Carousel: React.FC<Props> = ({
       <ul
         className="Carousel__list"
         ref={listRef}
-        style={{ transition: `transform ${animationDuration}ms ease ` }}
+        style={{
+          transition: `transform ${animationDuration}ms ease`,
+        }}
       >
-        {images.map((imageSrc, index) => (
+        {(infinite ? extendedImages : images).map((imageSrc, index) => (
           <li className="Carousel__listItem" key={index}>
             <img
               className="Carousel__image"
